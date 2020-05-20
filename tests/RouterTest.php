@@ -79,6 +79,19 @@ class RouterTest extends TestCase
             "/blog/12/article",
             "12 : article"
         ];
+
+        yield [
+            new Route(
+                "blog",
+                "/blog/{page}",
+                function (int $page) {
+                    return sprintf("Page %d", $page);
+                },
+                ["page" => 1]
+            ),
+            "/blog",
+            "Page 1"
+        ];
     }
 
     public function test if route not found by match()
