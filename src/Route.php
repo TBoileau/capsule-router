@@ -4,6 +4,7 @@ namespace TBoileau\Router;
 
 use ReflectionFunction;
 use ReflectionParameter;
+use function PHPUnit\Framework\isEmpty;
 
 /**
  * Class Route
@@ -28,17 +29,24 @@ class Route
     private $callable;
 
     /**
+     * @var array
+     */
+    private array $defaultParameters;
+
+    /**
      * Route constructor.
      *
-     * @param string         $name
-     * @param string         $path
-     * @param array|callable $callable
+     * @param string $name
+     * @param string $path
+     * @param $callable
+     * @param array $defaultParameters
      */
-    public function __construct(string $name, string $path, $callable)
+    public function __construct(string $name, string $path, $callable, array $defaultParameters = [])
     {
         $this->name = $name;
         $this->path = $path;
         $this->callable = $callable;
+        $this->defaultParameters = $defaultParameters;
     }
 
     /**
@@ -57,8 +65,21 @@ class Route
     {
         $pattern = str_replace("/", "\/", $this->path);
         $pattern = sprintf("/^%s$/", $pattern);
-        $pattern = preg_replace("/(\{\w+\})/", "(.+)", $pattern);
+        $pattern = preg_replace_callback("/(\{\w+\})/", [$this, "replaceParameter"], $pattern);
         return preg_match($pattern, $path);
+    }
+
+    /**
+     * @param array $matches
+     */
+    private function replaceParameter(array $matches): string
+    {
+        $parameter = str_replace(["{", "}"], "", $matches[1]);
+        if (isset($this->defaultParameters[$parameter])) {
+            return "(.+)?";
+        }
+
+        return "(.+)";
     }
 
     /**
@@ -70,7 +91,7 @@ class Route
     {
         $pattern = str_replace("/", "\/", $this->path);
         $pattern = sprintf("/^%s$/", $pattern);
-        $pattern = preg_replace("/(\{\w+\})/", "(.+)", $pattern);
+        $pattern = preg_replace_callback("/(\{\w+\})/", [$this, "replaceParameter"], $pattern);
         preg_match($pattern, $path, $matches);
 
         preg_match_all("/\{(\w+)\}/", $this->path, $paramMatches);
@@ -82,7 +103,15 @@ class Route
         $argsValue = [];
 
         if (count($parameters) > 0) {
-            $parameters = array_combine($parameters, $matches);
+            $values = [];
+
+            foreach ($parameters as $i => $parameter) {
+                if ((!isset($matches[$i]) || isEmpty($matches[$i])) && isset($this->defaultParameters[$parameter])) {
+                    $values[$parameter] = $this->defaultParameters[$parameter];
+                    continue;
+                }
+                $values[$parameter] = $matches[$i];
+            }
 
             if (is_array($this->callable)) {
                 $reflectionFunc = (new \ReflectionClass($this->callable[0]))->getMethod($this->callable[1]);
@@ -93,8 +122,8 @@ class Route
             $args = array_map(fn (ReflectionParameter $param) => $param->getName(), $reflectionFunc->getParameters());
 
             $argsValue = array_map(
-                function (string $name) use ($parameters) {
-                    return $parameters[$name];
+                function (string $name) use ($values) {
+                    return $values[$name];
                 },
                 $args
             );
