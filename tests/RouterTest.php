@@ -100,12 +100,6 @@ class RouterTest extends TestCase
         $this->router->match("/");
     }
 
-    public function test if route not found by get()
-    {
-        $this->expectException(RouteNotFoundException::class);
-        $this->router->get("fail");
-    }
-
     public function test if route already exists()
     {
         $this->router->add(
