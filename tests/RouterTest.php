@@ -89,7 +89,7 @@ class RouterTest extends TestCase
                 },
                 ["page" => 1]
             ),
-            "/blog",
+            "/blog/",
             "Page 1"
         ];
     }
