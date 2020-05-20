@@ -3,7 +3,9 @@
 namespace TBoileau\Router\Tests;
 
 use Generator;
+use GuzzleHttp\Psr7\Response;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\ResponseInterface;
 use TBoileau\Router\Route;
 use TBoileau\Router\RouteAlreadyExistsException;
 use TBoileau\Router\RouteNotFoundException;
@@ -48,7 +50,9 @@ class RouterTest extends TestCase
 
         $this->assertEquals($route, $this->router->match($path));
 
-        $this->assertStringContainsString($response, $this->router->call($path));
+        $this->assertInstanceOf(ResponseInterface::class, $this->router->call($path));
+
+        $this->assertStringContainsString($response, $this->router->call($path)->getBody()->getContents());
     }
 
     /**
@@ -73,7 +77,7 @@ class RouterTest extends TestCase
                 "article",
                 "/blog/{id}/{slug}",
                 function (string $slug, string $id) {
-                    return sprintf("%s : %s", $id, $slug);
+                    return new Response(200, [], sprintf("%s : %s", $id, $slug));
                 },
                 [],
                 ["id" => "\d+"]
@@ -87,7 +91,7 @@ class RouterTest extends TestCase
                 "blog",
                 "/blog/{page}",
                 function (int $page) {
-                    return sprintf("Page %d", $page);
+                    return new Response(200, [], sprintf("Page %d", $page));
                 },
                 ["page" => 1]
             ),
