@@ -3,7 +3,12 @@
 namespace TBoileau\Router\Tests;
 
 use Generator;
+use GuzzleHttp\Psr7\Request;
+use GuzzleHttp\Psr7\Response;
+use GuzzleHttp\Psr7\Uri;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\ResponseInterface;
+use TBoileau\Router\RequestContext;
 use TBoileau\Router\Route;
 use TBoileau\Router\RouteAlreadyExistsException;
 use TBoileau\Router\RouteNotFoundException;
@@ -19,19 +24,6 @@ use TBoileau\Router\Tests\Fixtures\HomeController;
 class RouterTest extends TestCase
 {
     /**
-     * @var Router
-     */
-    private Router $router;
-
-    /**
-     * @inheritDoc
-     */
-    protected function setUp(): void
-    {
-        $this->router = new Router();
-    }
-
-    /**
      * @dataProvider provideRoutes
      * @param Route $route
      * @param string $path
@@ -42,13 +34,17 @@ class RouterTest extends TestCase
      */
     public function test if route retrieves good action(Route $route, string $path, string $response)
     {
-        $this->router->add($route);
+        $router = new Router(RequestContext::fromRequest(new Request("GET", $path)));
 
-        $this->assertContains($route, $this->router->getRouteCollection());
+        $router->add($route);
 
-        $this->assertEquals($route, $this->router->match($path));
+        $this->assertContains($route, $router->getRouteCollection());
 
-        $this->assertStringContainsString($response, $this->router->call($path));
+        $this->assertEquals($route, $router->match());
+
+        $this->assertInstanceOf(ResponseInterface::class, $router->call());
+
+        $this->assertStringContainsString($response, $router->call()->getBody()->getContents());
     }
 
     /**
@@ -73,7 +69,7 @@ class RouterTest extends TestCase
                 "article",
                 "/blog/{id}/{slug}",
                 function (string $slug, string $id) {
-                    return sprintf("%s : %s", $id, $slug);
+                    return new Response(200, [], sprintf("%s : %s", $id, $slug));
                 },
                 [],
                 ["id" => "\d+"]
@@ -87,7 +83,7 @@ class RouterTest extends TestCase
                 "blog",
                 "/blog/{page}",
                 function (int $page) {
-                    return sprintf("Page %d", $page);
+                    return new Response(200, [], sprintf("Page %d", $page));
                 },
                 ["page" => 1]
             ),
@@ -98,7 +94,8 @@ class RouterTest extends TestCase
 
     public function test if route requirements is wrong()
     {
-        $this->router->add(new Route(
+        $router = new Router(RequestContext::fromRequest(new Request("GET", "/blog/fail/slug")));
+        $router->add(new Route(
             "article",
             "/blog/{id}/{slug}",
             function (string $slug, string $id) {
@@ -108,18 +105,20 @@ class RouterTest extends TestCase
             ["id" => "\d+"]
         ));
         $this->expectException(RouteNotFoundException::class);
-        $this->router->match("/blog/fail/slug");
+        $router->match();
     }
 
     public function test if route not found by match()
     {
+        $router = new Router(RequestContext::fromRequest(new Request("GET", "/")));
         $this->expectException(RouteNotFoundException::class);
-        $this->router->match("/");
+        $router->match();
     }
 
     public function test if route already exists()
     {
-        $this->router->add(
+        $router = new Router(RequestContext::fromRequest(new Request("GET", "/")));
+        $router->add(
             new Route(
                 "home",
                 "/",
@@ -128,7 +127,7 @@ class RouterTest extends TestCase
             )
         );
         $this->expectException(RouteAlreadyExistsException::class);
-        $this->router->add(
+        $router->add(
             new Route(
                 "home",
                 "/",

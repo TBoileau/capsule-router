@@ -2,6 +2,8 @@
 
 namespace TBoileau\Router\Tests\Fixtures;
 
+use GuzzleHttp\Psr7\Response;
+
 /**
  * Class HomeController
  *
@@ -11,6 +13,6 @@ class FooController
 {
     public function bar(string $bar)
     {
-        return $bar;
+        return new Response(200, [], $bar);
     }
 }
