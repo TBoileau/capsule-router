@@ -2,6 +2,7 @@
 
 namespace TBoileau\Router;
 
+use Psr\Http\Message\ResponseInterface;
 use ReflectionFunction;
 use ReflectionParameter;
 
@@ -97,11 +98,11 @@ class Route
     }
 
     /**
-     * @param  string $path
-     * @return mixed
+     * @param string $path
+     * @return ResponseInterface
      * @throws \ReflectionException
      */
-    public function call(string $path)
+    public function call(string $path): ResponseInterface
     {
         $pattern = str_replace("/", "\/", $this->path);
         $pattern = sprintf("/^%s$/", $pattern);
