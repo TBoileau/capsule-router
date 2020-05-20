@@ -5,7 +5,6 @@ namespace TBoileau\Router\Tests;
 use Generator;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
-use GuzzleHttp\Psr7\Uri;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Message\ResponseInterface;
 use TBoileau\Router\RequestContext;
