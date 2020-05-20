@@ -59,20 +59,6 @@ class Router
 
     /**
      * @param  string $name
-     * @return Route
-     * @throws RouteNotFoundException
-     */
-    public function get(string $name): Route
-    {
-        if (!$this->has($name)) {
-            throw new RouteNotFoundException();
-        }
-
-        return $this->routes[$name];
-    }
-
-    /**
-     * @param  string $name
      * @return bool
      */
     public function has(string $name): bool
