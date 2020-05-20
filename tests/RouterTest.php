@@ -74,7 +74,9 @@ class RouterTest extends TestCase
                 "/blog/{id}/{slug}",
                 function (string $slug, string $id) {
                     return sprintf("%s : %s", $id, $slug);
-                }
+                },
+                [],
+                ["id" => "\d+"]
             ),
             "/blog/12/article",
             "12 : article"
@@ -92,6 +94,21 @@ class RouterTest extends TestCase
             "/blog/",
             "Page 1"
         ];
+    }
+
+    public function test if route requirements is wrong()
+    {
+        $this->router->add(new Route(
+            "article",
+            "/blog/{id}/{slug}",
+            function (string $slug, string $id) {
+                return sprintf("%s : %s", $id, $slug);
+            },
+            [],
+            ["id" => "\d+"]
+        ));
+        $this->expectException(RouteNotFoundException::class);
+        $this->router->match("/blog/fail/slug");
     }
 
     public function test if route not found by match()
