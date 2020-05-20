@@ -2,6 +2,8 @@
 
 namespace TBoileau\Router;
 
+use Psr\Http\Message\ResponseInterface;
+
 /**
  * Class Router
  *
@@ -15,14 +17,27 @@ class Router
     private array $routes = [];
 
     /**
-     * @param  string $path
+     * @var RequestContext
+     */
+    private RequestContext $requestContext;
+
+    /**
+     * Router constructor.
+     * @param RequestContext $requestContext
+     */
+    public function __construct(RequestContext $requestContext)
+    {
+        $this->requestContext = $requestContext;
+    }
+
+    /**
      * @return Route
      * @throws RouteNotFoundException
      */
-    public function match(string $path): Route
+    public function match(): Route
     {
         foreach ($this->routes as $route) {
-            if ($route->test($path)) {
+            if ($route->test($this->requestContext->getPath())) {
                 return $route;
             }
         }
@@ -31,14 +46,13 @@ class Router
     }
 
     /**
-     * @param  string $path
-     * @return mixed
+     * @return ResponseInterface
      * @throws RouteNotFoundException
      * @throws \ReflectionException
      */
-    public function call(string $path)
+    public function call(): ResponseInterface
     {
-        return $this->match($path)->call($path);
+        return $this->match()->call($this->requestContext->getPath());
     }
 
     /**
@@ -55,20 +69,6 @@ class Router
         $this->routes[$route->getName()] = $route;
 
         return $this;
-    }
-
-    /**
-     * @param  string $name
-     * @return Route
-     * @throws RouteNotFoundException
-     */
-    public function get(string $name): Route
-    {
-        if (!$this->has($name)) {
-            throw new RouteNotFoundException();
-        }
-
-        return $this->routes[$name];
     }
 
     /**

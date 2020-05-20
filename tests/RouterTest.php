@@ -2,7 +2,12 @@
 
 namespace TBoileau\Router\Tests;
 
+use Generator;
+use GuzzleHttp\Psr7\Request;
+use GuzzleHttp\Psr7\Response;
 use PHPUnit\Framework\TestCase;
+use Psr\Http\Message\ResponseInterface;
+use TBoileau\Router\RequestContext;
 use TBoileau\Router\Route;
 use TBoileau\Router\RouteAlreadyExistsException;
 use TBoileau\Router\RouteNotFoundException;
@@ -17,65 +22,101 @@ use TBoileau\Router\Tests\Fixtures\HomeController;
  */
 class RouterTest extends TestCase
 {
-    public function test()
+    /**
+     * @dataProvider provideRoutes
+     * @param Route $route
+     * @param string $path
+     * @param string $response
+     * @throws RouteAlreadyExistsException
+     * @throws RouteNotFoundException
+     * @throws \ReflectionException
+     */
+    public function test if route retrieves good action(Route $route, string $path, string $response)
     {
-        $router = new Router();
+        $router = new Router(RequestContext::fromRequest(new Request("GET", $path)));
 
-        $routeHome = new Route("home", "/", [HomeController::class, "index"]);
+        $router->add($route);
 
-        $routeFoo = new Route("foo", "/foo/{bar}", [FooController::class, "bar"]);
+        $this->assertContains($route, $router->getRouteCollection());
 
-        $routeArticle = new Route(
+        $this->assertEquals($route, $router->match());
+
+        $this->assertInstanceOf(ResponseInterface::class, $router->call());
+
+        $this->assertStringContainsString($response, $router->call()->getBody()->getContents());
+    }
+
+    /**
+     * @return Generator
+     */
+    public function provideRoutes(): Generator
+    {
+        yield [
+            new Route("home", "/", [HomeController::class, "index"]),
+            "/",
+            "Hello world !"
+        ];
+
+        yield [
+            new Route("foo", "/foo/{bar}", [FooController::class, "bar"]),
+            "/foo/test",
+            "test"
+        ];
+
+        yield [
+            new Route(
+                "article",
+                "/blog/{id}/{slug}",
+                function (string $slug, string $id) {
+                    return new Response(200, [], sprintf("%s : %s", $id, $slug));
+                },
+                [],
+                ["id" => "\d+"]
+            ),
+            "/blog/12/article",
+            "12 : article"
+        ];
+
+        yield [
+            new Route(
+                "blog",
+                "/blog/{page}",
+                function (int $page) {
+                    return new Response(200, [], sprintf("Page %d", $page));
+                },
+                ["page" => 1]
+            ),
+            "/blog/",
+            "Page 1"
+        ];
+    }
+
+    public function test if route requirements is wrong()
+    {
+        $router = new Router(RequestContext::fromRequest(new Request("GET", "/blog/fail/slug")));
+        $router->add(new Route(
             "article",
             "/blog/{id}/{slug}",
             function (string $slug, string $id) {
                 return sprintf("%s : %s", $id, $slug);
-            }
-        );
-
-        $router->add($routeHome);
-        $router->add($routeFoo);
-        $router->add($routeArticle);
-
-        $this->assertCount(3, $router->getRouteCollection());
-
-        $this->assertContainsOnlyInstancesOf(Route::class, $router->getRouteCollection());
-
-        $this->assertEquals($routeHome, $router->get("home"));
-
-        $this->assertEquals($routeHome, $router->match("/"));
-        $this->assertEquals($routeArticle, $router->match("/blog/12/mon-article"));
-
-        $this->assertEquals("Hello world !", $router->call("/"));
-
-        $this->assertEquals(
-            "12 : mon-article",
-            $router->call("/blog/12/mon-article")
-        );
-
-        $this->assertEquals(
-            "bar",
-            $router->call("/foo/bar")
-        );
-    }
-
-    public function testIfRouteNotFoundByMatch()
-    {
-        $router = new Router();
+            },
+            [],
+            ["id" => "\d+"]
+        ));
         $this->expectException(RouteNotFoundException::class);
-        $router->match("/");
+        $router->match();
     }
 
-    public function testIfRouteNotFoundByGet()
+    public function test if route not found by match()
     {
-        $router = new Router();
+        $router = new Router(RequestContext::fromRequest(new Request("GET", "/")));
         $this->expectException(RouteNotFoundException::class);
-        $router->get("fail");
+        $router->match();
     }
 
-    public function testIfRouteAlreadyExists()
+    public function test if route already exists()
     {
-        $router = new Router();
+        $router = new Router(RequestContext::fromRequest(new Request("GET", "/")));
         $router->add(
             new Route(
                 "home",
