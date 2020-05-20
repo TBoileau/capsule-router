@@ -4,6 +4,7 @@ namespace TBoileau\Router;
 
 /**
  * Class Router
+ *
  * @package TBoileau\Router
  */
 class Router
@@ -14,7 +15,7 @@ class Router
     private array $routes = [];
 
     /**
-     * @param string $path
+     * @param  string $path
      * @return Route
      * @throws RouteNotFoundException
      */
@@ -30,7 +31,7 @@ class Router
     }
 
     /**
-     * @param string $path
+     * @param  string $path
      * @return mixed
      * @throws RouteNotFoundException
      * @throws \ReflectionException
@@ -41,7 +42,7 @@ class Router
     }
 
     /**
-     * @param Route $route
+     * @param  Route $route
      * @return $this
      * @throws RouteAlreadyExistsException
      */
@@ -57,7 +58,7 @@ class Router
     }
 
     /**
-     * @param string $name
+     * @param  string $name
      * @return Route
      * @throws RouteNotFoundException
      */
@@ -71,7 +72,7 @@ class Router
     }
 
     /**
-     * @param string $name
+     * @param  string $name
      * @return bool
      */
     public function has(string $name): bool

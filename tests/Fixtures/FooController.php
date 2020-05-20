@@ -4,6 +4,7 @@ namespace TBoileau\Router\Tests\Fixtures;
 
 /**
  * Class HomeController
+ *
  * @package TBoileau\Router\Tests\Fixtures
  */
 class FooController

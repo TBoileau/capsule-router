@@ -6,6 +6,7 @@ use Exception;
 
 /**
  * Class RouteNotFoundException
+ *
  * @package TBoileau\Router
  */
 class RouteNotFoundException extends Exception

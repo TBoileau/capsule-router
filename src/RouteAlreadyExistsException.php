@@ -6,6 +6,7 @@ use Exception;
 
 /**
  * Class RouteAlreadyExistsException
+ *
  * @package TBoileau\Router
  */
 class RouteAlreadyExistsException extends Exception

@@ -7,6 +7,7 @@ use ReflectionParameter;
 
 /**
  * Class Route
+ *
  * @package TBoileau\Router
  */
 class Route
@@ -28,8 +29,9 @@ class Route
 
     /**
      * Route constructor.
-     * @param string $name
-     * @param string $path
+     *
+     * @param string         $name
+     * @param string         $path
      * @param array|callable $callable
      */
     public function __construct(string $name, string $path, $callable)
@@ -48,7 +50,7 @@ class Route
     }
 
     /**
-     * @param string $path
+     * @param  string $path
      * @return bool
      */
     public function test(string $path): bool
@@ -60,7 +62,7 @@ class Route
     }
 
     /**
-     * @param string $path
+     * @param  string $path
      * @return mixed
      * @throws \ReflectionException
      */
@@ -90,9 +92,12 @@ class Route
 
             $args = array_map(fn (ReflectionParameter $param) => $param->getName(), $reflectionFunc->getParameters());
 
-            $argsValue = array_map(function (string $name) use ($parameters) {
-                return $parameters[$name];
-            }, $args);
+            $argsValue = array_map(
+                function (string $name) use ($parameters) {
+                    return $parameters[$name];
+                },
+                $args
+            );
         }
 
         $callable = $this->callable;

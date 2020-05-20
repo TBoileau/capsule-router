@@ -12,6 +12,7 @@ use TBoileau\Router\Tests\Fixtures\HomeController;
 
 /**
  * Class RouterTest
+ *
  * @package TBoileau\Router\Tests
  */
 class RouterTest extends TestCase
@@ -24,9 +25,13 @@ class RouterTest extends TestCase
 
         $routeFoo = new Route("foo", "/foo/{bar}", [FooController::class, "bar"]);
 
-        $routeArticle = new Route("article", "/blog/{id}/{slug}", function (string $slug, string $id) {
-            return sprintf("%s : %s", $id, $slug);
-        });
+        $routeArticle = new Route(
+            "article",
+            "/blog/{id}/{slug}",
+            function (string $slug, string $id) {
+                return sprintf("%s : %s", $id, $slug);
+            }
+        );
 
         $router->add($routeHome);
         $router->add($routeFoo);
@@ -71,8 +76,22 @@ class RouterTest extends TestCase
     public function testIfRouteAlreadyExists()
     {
         $router = new Router();
-        $router->add(new Route("home", "/", function() {}));
+        $router->add(
+            new Route(
+                "home",
+                "/",
+                function () {
+                }
+            )
+        );
         $this->expectException(RouteAlreadyExistsException::class);
-        $router->add(new Route("home", "/", function() {}));
+        $router->add(
+            new Route(
+                "home",
+                "/",
+                function () {
+                }
+            )
+        );
     }
 }
