@@ -35,19 +35,31 @@ class Route
     private array $defaultParameters;
 
     /**
+     * @var array
+     */
+    private array $requirements;
+
+    /**
      * Route constructor.
      *
      * @param string $name
      * @param string $path
      * @param $callable
      * @param array $defaultParameters
+     * @param array $requirements
      */
-    public function __construct(string $name, string $path, $callable, array $defaultParameters = [])
-    {
+    public function __construct(
+        string $name,
+        string $path,
+        $callable,
+        array $defaultParameters = [],
+        array $requirements = []
+    ) {
         $this->name = $name;
         $this->path = $path;
         $this->callable = $callable;
         $this->defaultParameters = $defaultParameters;
+        $this->requirements = $requirements;
     }
 
     /**
@@ -72,15 +84,16 @@ class Route
 
     /**
      * @param array $matches
+     * @return string
      */
     private function replaceParameter(array $matches): string
     {
         $parameter = str_replace(["{", "}"], "", $matches[1]);
         if (isset($this->defaultParameters[$parameter])) {
-            return "(.+)?";
+            return sprintf("(%s)?", $this->requirements[$parameter] ?? ".+");
         }
 
-        return "(.+)";
+        return sprintf("(%s)?", $this->requirements[$parameter] ?? ".+");
     }
 
     /**
